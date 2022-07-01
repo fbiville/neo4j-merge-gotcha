@@ -25,6 +25,9 @@ func main() {
 	defer func() {
 		errors.PanicOnErr(driver.Close())
 	}()
+
+	createUniqueConstraint(driver)
+
 	params := map[string]interface{}{
 		"name": "Jane Doe",
 	}
@@ -53,4 +56,15 @@ func main() {
 	errors.PanicOnErr(err)
 	count, _ := record.Get("count")
 	fmt.Printf("Got %d person node(s)", count)
+}
+
+func createUniqueConstraint(driver neo4j.Driver) {
+	session := driver.NewSession(neo4j.SessionConfig{})
+	defer func() {
+		errors.PanicOnErr(session.Close())
+	}()
+	result, err := session.Run("CREATE CONSTRAINT unique_person_name FOR (p:Person) REQUIRE p.name IS UNIQUE", nil)
+	errors.PanicOnErr(err)
+	_, err = result.Consume()
+	errors.PanicOnErr(err)
 }
